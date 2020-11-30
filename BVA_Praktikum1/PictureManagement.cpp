@@ -28,13 +28,14 @@ void PictureManagement::readDCM(std::string& picturePath, cv::Mat& outPicture) {
         int widthInPixel = sqrt(pictureSize / 2); // width = height, so only one size is needed
         int offset = fileSize - pictureSize;
         dcmFile.seekg(offset, dcmFile.beg); // skip header
-        char* buffer = new char[pictureSize];
-        dcmFile.read(buffer, pictureSize);
+        ushort* buffer = new ushort[pictureSize/2];
+        dcmFile.read((char*)buffer, pictureSize);
         cv::Mat picture(widthInPixel, widthInPixel, CV_16UC1, buffer);
         double minVal, maxVal;
         cv::minMaxLoc(picture, &minVal, &maxVal);
-        double alpha = 255.0 / maxVal;
-        cv::convertScaleAbs(picture, outPicture, alpha, 0.0);
+        double alpha = 255.0 / (maxVal - minVal);
+        double beta = -minVal * alpha;
+        cv::convertScaleAbs(picture, outPicture, alpha, beta);
         delete[] buffer;
         if (!outPicture.empty()) {
             cv::imshow("Ergebnis", outPicture);
