@@ -1,4 +1,5 @@
-// Geschrieben von: Marina Inokuchi
+// Code by: Marina Inokuchi
+// Please start the .exe from the command line. Pass in 1 parameter, which is the path to the folder in which the three .dcm files are saved.
 
 #include "FileManagement.hpp"
 #include "PictureManagement.hpp"
