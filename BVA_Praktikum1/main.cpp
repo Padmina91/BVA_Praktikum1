@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 
     FileManagement::correctPath(std::ref(path));
 
-    for (int i = 16; i <= 20; i++) {
+    for (int i = 16; i <= 21; i++) {
         // read original picture --------------------------------------------------------------------------------------------------------------------
         std::string histPath = "";
         cv::Mat originalPicture, resultPicture;

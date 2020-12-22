@@ -78,21 +78,20 @@ void PictureManagement::filter(cv::Mat& inPicture, cv::Mat& outPicture, filterEn
 
 void PictureManagement::drawHistogram(cv::Mat& inPicture, cv::Mat& outHistogram, cv::Mat& histogramPicture, int histWidth, int histHeight) {
     int histSize = histWidth;
-    float range[] = {0, 256}; // the upper boundary is exclusive
+    float range[] = {0, histWidth}; // the upper boundary is exclusive
     const float* histRange = {range};
-    cv::Mat blurredPicture;
+    cv::Mat blurredPicture, histogramToDisplay;
     cv::blur(inPicture, blurredPicture, cv::Size(7, 7)); // first, use the boxcar filter with a 7x7 pixel kernel size
-    //cv::calcHist(&inPicture, 1, 0, cv::Mat(), outHistogram, 1, &histSize, &histRange);
     cv::calcHist(&blurredPicture, 1, 0, cv::Mat(), outHistogram, 1, &histSize, &histRange);
-    std::cout << "in drawHistogram: outHistogram rows: " << outHistogram.rows << std::endl;
-    std::cout << "in drawHistogram: outHistogram: " << outHistogram << ", ";
-    histogramPicture = cv::Mat(histHeight, histWidth, CV_8UC3, cv::Scalar(0, 0, 0));
-    cv::normalize(outHistogram, outHistogram, 0, histogramPicture.rows, cv::NORM_MINMAX, -1, cv::Mat());
-    int bin_w = cvRound((double) histWidth / histSize);
+    cv::normalize(outHistogram, outHistogram, 0, 1, cv::NormTypes::NORM_MINMAX, -1);
+    cv::normalize(outHistogram, histogramToDisplay, 0, histHeight, cv::NormTypes::NORM_MINMAX, -1);
+
+    int binWidth = (int)((double) histWidth / histSize);
     for (int i = 1; i < histSize; i++) {
-        cv::line(histogramPicture, cv::Point(bin_w * (i - 1), histHeight - cvRound(outHistogram.at<float>(i - 1))),
-            cv::Point(bin_w * (i), histHeight - cvRound(outHistogram.at<float>(i))),
-            cv::Scalar(255, 0, 0), 2, 8, 0);
+        cv::line(histogramPicture,
+            cv::Point(binWidth * (i - 1), histHeight - cvRound(histogramToDisplay.at<double>(i - 1))),
+            cv::Point(binWidth * i, histHeight - cvRound(histogramToDisplay.at<double>(i))),
+            cv::Scalar(255, 0, 255), 2);
     }
     cv::imshow("Histrogramm", histogramPicture);
     cv::waitKey(0);
@@ -101,18 +100,31 @@ void PictureManagement::drawHistogram(cv::Mat& inPicture, cv::Mat& outHistogram,
 
 void PictureManagement::segment(cv::Mat& inPicture, std::string histPath) {
     double minVal, maxVal;
+    const int histHeight = 400;
     cv::minMaxLoc(inPicture, &minVal, &maxVal);
-
-    std::cout << "minVal: " << minVal << ", ";
-    std::cout << "maxVal: " << maxVal << ", ";
-    int histWidth = maxVal;
-    std::cout << "histWidth: " << histWidth << ".\n";
-    cv::Mat histogram, histogramPicture;
-    drawHistogram(std::ref(inPicture), std::ref(histogram), std::ref(histogramPicture), histWidth, 400);
+    const int histWidth = maxVal;
+    cv::Mat histogram = cv::Mat(1, histWidth, CV_32F, cv::Scalar(0, 0, 0));
+    cv::Mat histogramPicture = cv::Mat(histHeight, histWidth, CV_8UC3, cv::Scalar(0, 0, 0));
+    drawHistogram(std::ref(inPicture), std::ref(histogram), std::ref(histogramPicture), histWidth, histHeight);
     if (!histPath.empty()) {
         cv::imwrite(histPath, histogramPicture);
     }
-    std::cout << "Histrogram rows: " << histogram.rows << std::endl;
+    std::cout << histogram << std::endl;
+    // Algorithmus von Tsai ---------------------------------------------------------------------------------------------------------------------
+    int r = 25;
+    std::vector<double> curvatures;
+    // initialize curvatures vector
+    for (int i = 0; i < histWidth; i++) {
+        curvatures.emplace_back(0.0);
+    }
 
-    //std::cout << histogram << ", ";
+    for (int t = r; t < (histWidth - r); t++) {
+        double sum = 0;
+        for (int i = 1; i <= r; i++) {
+            sum += (histogram.at<double>(t+i) - histogram.at<double>(t-i))/ 2.0 * i;
+        }
+        curvatures[t] = 1.0 / r * sum;
+    }
+    cv::Mat curvature = cv::Mat(curvatures);
+    std::cout << curvature << std::endl;
 }
