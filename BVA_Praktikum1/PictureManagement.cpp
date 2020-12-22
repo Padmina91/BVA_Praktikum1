@@ -107,7 +107,7 @@ void PictureManagement::segment(cv::Mat& inPicture, std::string histPath) {
     cv::Mat histogramPicture = cv::Mat(histHeight, histWidth, CV_8UC3, cv::Scalar::all(0));
     drawHistogram(std::ref(inPicture), std::ref(histogram), std::ref(histogramPicture), histWidth, histHeight);
 
-    // Algorithmus von Tsai ---------------------------------------------------------------------------------------------------------------------
+    // Algorithmus von Tsai --------------------------------------------------------------------------------------------------------------------
     const int r = 25;
     std::vector<double> angleChangesVec;
     // initialize angleChangesVec
