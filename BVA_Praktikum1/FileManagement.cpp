@@ -12,11 +12,9 @@ void FileManagement::correctPath(std::string& path) {
     if (!(*rit == '/' || *rit == '\\')) {
         if (path.find(forwardslash) != std::string::npos) {
             path += forwardslash;
-        }
-        else if (path.find(backslash) != std::string::npos) {
+        } else if (path.find(backslash) != std::string::npos) {
             path += backslash;
-        }
-        else {
+        } else {
             std::cout << "Es handelt sich nicht um einen validen Pfad. Bitte erneut versuchen." << std::endl;
             exit(-1);
         }
